@@ -18,6 +18,8 @@ jobs:
     - name: "⬇ Checkout"
       uses: actions/checkout@v2
 
+    - run: mkdir -p ${{ github.workspace }}/build
+
     - name: Cache Raspberry Pi OS
       id: cache-rpi-os
       uses: actions/cache@v2
@@ -27,9 +29,7 @@ jobs:
 
     - name: "⬇ Download Raspberry Pi OS zip"
       if: steps.cache-rpi-os.outputs.cache-hit != 'true'
-      run: |
-        mkdir -p ${{ github.workspace }}/build
-        wget ${{ env.RPI_OS_URL }} -O ${{ github.workspace }}/build/rpi-os.zip
+      run: wget ${{ env.RPI_OS_URL }} -O ${{ github.workspace }}/build/rpi-os.zip
 
     - name: "🔓 Unzip Raspberry Pi OS"
       run: |
