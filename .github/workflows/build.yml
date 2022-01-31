@@ -51,10 +51,12 @@ jobs:
 
     - name: "✏ Rename image"
       run: |
-        NOW=$(date +"%Y%m%d%H%M%S")
+        NOW="$(date +"%Y%m%d%H%M%S")"
+        IMAGE="${{ env.RPI_OS_VERSION }}-pi-topd-${NOW}"
         echo "NOW=${NOW}" >> $GITHUB_ENV
-        echo "IMAGE=${{ env.RPI_OS_VERSION }}-pi-topd-${NOW}" >> $GITHUB_ENV
-        mv ${{ github.workspace }}/build/output.img ${{ github.workspace }}/build/${{ env.IMAGE }}}.img
+        echo "IMAGE=${IMAGE}" >> $GITHUB_ENV
+
+        mv ${{ github.workspace }}/build/output.img ${{ github.workspace }}/build/${IMAGE}.img
 
     - name: "📝 Prepare release"
       if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
