@@ -33,6 +33,7 @@ jobs:
 
     - name: "🔓 Unzip Raspberry Pi OS"
       run: |
+        cd ./build
         unzip rpi-os.zip
         rm rpi-os.zip
 
