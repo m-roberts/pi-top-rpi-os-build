@@ -55,8 +55,9 @@ jobs:
 
     - name: "✏ Rename image"
       run: |
-        cd build
-        mv output.img ${{ env.IMAGE }}.img
+        mkdir -p ./build
+        cd ./build
+        mv ./output.img ./${{ env.IMAGE }}.img
 
     - name: "📝 Prepare release"
       if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
