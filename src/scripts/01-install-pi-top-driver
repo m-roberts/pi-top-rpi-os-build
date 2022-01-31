@@ -13,7 +13,10 @@ install_cleanup_trap
 apt-get install -y pi-top-os-unstable-apt-source
 apt-get update
 # Install headless services
-apt-get install -y --no-install-recommends pi-topd pt-miniscreen
+apt-get install -y --no-install-recommends \
+  pi-topd \
+  pt-miniscreen \
+  xprintidle # Needed until released: https://github.com/pi-top/pi-topd/pull/143
 
 # Install additional device support (e.g. touchscreen, display port, firmware update)
 # https://github.com/pi-top/pi-topOS-Core-Packages/blob/927828f4e577cc4718d541c4afc3e1e74bb113b4/debian/control#L49-L60
