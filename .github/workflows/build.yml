@@ -47,11 +47,14 @@ jobs:
         scripts:  "${{ github.workspace }}/src/scripts"
         config:    "${{ github.workspace }}/src/config.bash"
 
+    - name: "✏ Set variables"
+      run: |
+        NOW=$(date +"%Y%m%d%H%M%S")
+        echo "NOW=${NOW}" >> $GITHUB_ENV
+        echo "IMAGE=rpi-os-${{ env.RPI_OS_VERSION }}-pi-topd-${NOW}" >> $GITHUB_ENV
+
     - name: "✏ Rename image"
       run: |
-        echo "NOW=$(date +"%Y%m%d%H%M%S")" >> $GITHUB_ENV
-        echo "IMAGE=rpi-os-${{ env.RPI_OS_VERSION }}-pi-topd-${{ env.NOW }}" >> $GITHUB_ENV
-
         cd build
         mv output.img ${{ env.IMAGE }}.img
 
