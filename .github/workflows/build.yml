@@ -10,6 +10,7 @@ on:
 
 env:
   RPI_OS_URL: "https://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lite_armhf-2022-01-28/2022-01-28-raspios-bullseye-armhf-lite.zip"
+  RPI_OS_VERSION: "2022-01-28-raspios-bullseye-armhf-lite"
 
 jobs:
   build:
@@ -48,17 +49,12 @@ jobs:
         scripts:  "${{ github.workspace }}/src/scripts"
         config:    "${{ github.workspace }}/src/config.bash"
 
-    - name: "✏ Set variables"
+    - name: "✏ Rename image"
       run: |
         NOW=$(date +"%Y%m%d%H%M%S")
         echo "NOW=${NOW}" >> $GITHUB_ENV
-        echo "IMAGE=rpi-os-${{ env.RPI_OS_VERSION }}-pi-topd-${NOW}" >> $GITHUB_ENV
-
-    - name: "✏ Rename image"
-      run: |
-        mkdir -p ${{ github.workspace }}/build
-        cd ${{ github.workspace }}/build
-        mv ${{ github.workspace }}/output.img ${{ github.workspace }}/${{ env.IMAGE }}.img
+        echo "IMAGE=${{ env.RPI_OS_VERSION }}-pi-topd-${NOW}" >> $GITHUB_ENV
+        mv ${{ github.workspace }}/build/output.img ${{ github.workspace }}/build/${{ env.IMAGE }}}.img
 
     - name: "📝 Prepare release"
       if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
