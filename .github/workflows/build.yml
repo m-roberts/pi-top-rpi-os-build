@@ -28,12 +28,12 @@ jobs:
     - name: "⬇ Download Raspberry Pi OS zip"
       if: steps.cache-rpi-os.outputs.cache-hit != 'true'
       run: |
-        mkdir -p ./build
-        wget ${{ env.RPI_OS_URL }} -O ./build/rpi-os.zip
+        mkdir -p ${{ github.workspace }}/build
+        wget ${{ env.RPI_OS_URL }} -O ${{ github.workspace }}/build/rpi-os.zip
 
     - name: "🔓 Unzip Raspberry Pi OS"
       run: |
-        cd ./build
+        cd ${{ github.workspace }}/build
         unzip rpi-os.zip
         rm rpi-os.zip
 
@@ -55,9 +55,9 @@ jobs:
 
     - name: "✏ Rename image"
       run: |
-        mkdir -p ./build
-        cd ./build
-        mv ./output.img ./${{ env.IMAGE }}.img
+        mkdir -p ${{ github.workspace }}/build
+        cd ${{ github.workspace }}/build
+        mv ${{ github.workspace }}/output.img ${{ github.workspace }}/${{ env.IMAGE }}.img
 
     - name: "📝 Prepare release"
       if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
@@ -109,7 +109,7 @@ jobs:
     #     token: "${{ secrets.GITHUB_TOKEN }}"
     #     owner: guysoft
     #     repo: pi-top-rpi-os-build
-    #     output: ./rpi-imager.json
+    #     output: ${{ github.workspace }}/rpi-imager.json
     #     nameStable: "pi-top-rpi-os-build (stable)"
     #     namePrerelease: "pi-top-rpi-os-build (prerelease)"
 
@@ -122,5 +122,5 @@ jobs:
     #     port: 22
     #     username: ${{ secrets.FTP_USERNAME }}
     #     password: ${{ secrets.FTP_PASSWORD }}
-    #     localPath: './rpi-imager.json'
+    #     localPath: '${{ github.workspace }}/rpi-imager.json'
     #     remotePath: '/rpi-imager/rpi-imager-pi-top-rpi-os-build.json'
