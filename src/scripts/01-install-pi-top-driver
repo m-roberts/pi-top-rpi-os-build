@@ -13,4 +13,4 @@ install_cleanup_trap
 apt-get install -y pi-top-os-unstable-apt-source
 apt-get update
 # Install pi-topd service
-apt-get install -y --no-install-recommends pi-topd
+apt-get install -y --no-install-recommends pi-topd pt-miniscreen
