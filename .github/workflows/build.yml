@@ -1,0 +1,125 @@
+name: Build Image
+
+on:
+  push:
+    branches:
+      - '*'
+  # repository_dispatch:
+  #   types: [rpi_os_release]
+  workflow_dispatch:
+
+env:
+  RPI_OS_URL: "https://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lite_armhf-2022-01-28/2022-01-28-raspios-bullseye-armhf-lite.zip"
+  RPI_OS_VERSION: "2022-01-28-raspios-bullseye-armhf-lite"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: "⬇ Checkout"
+      uses: actions/checkout@v2
+
+    - run: mkdir -p ${{ github.workspace }}/build
+
+    - name: Cache Raspberry Pi OS
+      id: cache-rpi-os
+      uses: actions/cache@v2
+      with:
+        path: build/rpi-os.zip
+        key: "${{ env.RPI_OS_URL }}"
+
+    - name: "⬇ Download Raspberry Pi OS zip"
+      # if: steps.cache-rpi-os.outputs.cache-hit != 'true'
+      run: wget ${{ env.RPI_OS_URL }} -O ${{ github.workspace }}/build/rpi-os.zip
+
+    - name: "🔓 Unzip Raspberry Pi OS"
+      run: |
+        cd ${{ github.workspace }}/build
+        ls -l
+        unzip rpi-os.zip
+        rm rpi-os.zip
+
+        IMAGE=$(ls *.img | head -n 1)
+        mv $IMAGE input.img
+
+    - name: "🏗 Run CustoPiZer"
+      uses: OctoPrint/CustoPiZer@main
+      with:
+        workspace: "${{ github.workspace }}/build"
+        scripts:  "${{ github.workspace }}/src/scripts"
+        config:    "${{ github.workspace }}/src/config.bash"
+
+    - name: "✏ Rename image"
+      run: |
+        NOW="$(date +"%Y%m%d%H%M%S")"
+        IMAGE="${{ env.RPI_OS_VERSION }}-pi-topd-${NOW}"
+        echo "NOW=${NOW}" >> $GITHUB_ENV
+        echo "IMAGE=${IMAGE}" >> $GITHUB_ENV
+
+        mv ${{ github.workspace }}/build/output.img ${{ github.workspace }}/build/${IMAGE}.img
+
+    - name: "📝 Prepare release"
+      if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
+      run: |
+        RELEASE_NAME="Raspberry Pi OS ${{ env.RPI_OS_VERSION }} with latest pi-top driver"
+        echo "RELEASE_NAME=$RELEASE_NAME" >> $GITHUB_ENV
+
+        RELEASE_TAG="${{ env.RPI_OS_VERSION }}.pi-topd.${{ env.NOW }}"
+        echo "RELEASE_TAG=$RELEASE_TAG" >> $GITHUB_ENV
+
+        RELEASE_BODY=""
+        (git rev-parse $RELEASE_TAG >/dev/null 2>&1) || RELEASE_BODY="Created with [CustoPiZer](https://github.com/OctoPrint/CustoPiZer)"
+
+        echo "RELEASE_BODY=$RELEASE_BODY" >> $GITHUB_ENV
+
+    - name: "📦 Package the image"
+      if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
+      id: package-image
+      uses: OctoPrint/actions/package-rpi-image@main
+      with:
+        image_path: "build/${{ env.IMAGE }}.img"
+
+    - name: "🔖 Create release & attach assets"
+      if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
+      uses: softprops/action-gh-release@v1
+      with:
+        name: "${{ env.RELEASE_NAME }}"
+        tag_name: "${{ env.RELEASE_TAG }}"
+        body: "${{ env.RELEASE_BODY }}"
+        prerelease: ${{ contains(env.RPI_OS_VERSION, 'rc') }}
+        fail_on_unmatched_files: true
+        files: |
+          build/${{ steps.package-image.outputs.zip_name }}
+          build/${{ steps.package-image.outputs.zip_name }}.md5
+          build/${{ steps.package-image.outputs.zip_name }}.sha256
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: "⬆ Upload build artifact"
+      uses: actions/upload-artifact@v2
+      if: github.event_name == 'push'
+      with:
+        name: ${{ env.IMAGE }}
+        path: build/${{ env.IMAGE }}.img
+
+    # - name: "🔖 Generate rpi-imager json"
+    #   uses: OctoPrint/actions/rpi-imager-json@main
+    #   with:
+    #     token: "${{ secrets.GITHUB_TOKEN }}"
+    #     owner: guysoft
+    #     repo: pi-top-rpi-os-build
+    #     output: ${{ github.workspace }}/rpi-imager.json
+    #     nameStable: "pi-top-rpi-os-build (stable)"
+    #     namePrerelease: "pi-top-rpi-os-build (prerelease)"
+
+    # - name: "⬆ Publish Files To rpi-imager"
+    #   if: github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
+    #   id: upload
+    #   uses: Creepios/sftp-action@v1.0.3
+    #   with:
+    #     host: ${{ secrets.FTP_HOST }}
+    #     port: 22
+    #     username: ${{ secrets.FTP_USERNAME }}
+    #     password: ${{ secrets.FTP_PASSWORD }}
+    #     localPath: '${{ github.workspace }}/rpi-imager.json'
+    #     remotePath: '/rpi-imager/rpi-imager-pi-top-rpi-os-build.json'
